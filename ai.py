@@ -94,9 +94,9 @@ def generate_reply(lead_context: dict, conversation_history: list, incoming_mess
         print(f"[AI] Error generating reply: {e}")
         first_name = lead_context.get("firstName") or "there"
         return {
-            "reply": f"Hey {first_name}, thanks for your message! {AGENT_NAME} will be in touch with you shortly.",
-            "handoff": True,
-            "handoff_reason": f"AI error: {e}"
+            "reply": f"Hey {first_name}! Thanks for reaching out — are you thinking about buying or selling in the Evansville area?",
+            "handoff": False,
+            "handoff_reason": None
         }
 
 
