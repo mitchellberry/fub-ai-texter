@@ -28,10 +28,11 @@ AGENT_NAME = os.getenv("AGENT_NAME", "Mitchell")
 BROKERAGE = os.getenv("BROKERAGE", "@properties IND")
 
 HANDOFF_TRIGGERS = [
-    "speak to someone", "call me", "talk to someone", "real person",
-    "human", "agent please", "stop", "unsubscribe", "opt out",
+    "speak to someone", "call me", "talk to a person", "real person",
+    "agent please", "stop texting", "unsubscribe", "opt out",
     "ready to buy", "ready to sell", "make an offer", "sign a contract",
     "let's meet", "can we meet", "schedule a showing", "book a showing",
+    "i want to stop", "please stop",
 ]
 
 
