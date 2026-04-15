@@ -81,6 +81,7 @@ def generate_reply(lead_context: dict, conversation_history: list, incoming_mess
     messages.append({"role": "user", "content": incoming_message})
 
     try:
+        print(f"[AI] Calling OpenAI with {len(messages)} messages, key ends in ...{os.getenv('OPENAI_API_KEY', '')[-6:]}")
         response = client.chat.completions.create(
             model=MODEL,
             messages=messages,
@@ -88,10 +89,11 @@ def generate_reply(lead_context: dict, conversation_history: list, incoming_mess
             temperature=0.75,
         )
         reply_text = response.choices[0].message.content.strip().strip('"').strip("'")
+        print(f"[AI] Success: {reply_text[:60]}")
         return {"reply": reply_text, "handoff": False, "handoff_reason": None}
 
     except Exception as e:
-        print(f"[AI] Error generating reply: {e}")
+        print(f"[AI] Error generating reply — TYPE: {type(e).__name__} — MSG: {e}")
         first_name = lead_context.get("firstName") or "there"
         return {
             "reply": f"Hey {first_name}! Thanks for reaching out — are you thinking about buying or selling in the Evansville area?",
