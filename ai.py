@@ -28,7 +28,7 @@ AGENT_NAME = os.getenv("AGENT_NAME", "Mitchell")
 BROKERAGE = os.getenv("BROKERAGE", "@properties IND")
 
 HANDOFF_TRIGGERS = [
-    "speak to someone", "call me", "talk to a person", "real person",
+    "speak to someone", "i want to talk to someone", "talk to a person", "real person",
     "agent please", "stop texting", "unsubscribe", "opt out",
     "ready to buy", "ready to sell", "make an offer", "sign a contract",
     "let's meet", "can we meet", "schedule a showing", "book a showing",
@@ -80,9 +80,10 @@ def generate_reply(lead_context: dict, conversation_history: list, incoming_mess
     Returns: { "reply": str, "handoff": bool, "handoff_reason": str }
     """
     if should_handoff(incoming_message):
-        first_name = lead_context.get("firstName") or lead_context.get("name", "").split()[0] or "there"
+        first_name = lead_context.get("firstName") or lead_context.get("name", "").split()[0] or ""
+        thanks = f" Thanks {first_name}!" if first_name else ""
         return {
-            "reply": f"Absolutely! I'll have {AGENT_NAME} reach out to you personally very soon. Thanks {first_name}!",
+            "reply": f"Absolutely! I'll have {AGENT_NAME} reach out to you personally very soon.{thanks}",
             "handoff": True,
             "handoff_reason": f"Lead requested human contact: '{incoming_message}'"
         }
