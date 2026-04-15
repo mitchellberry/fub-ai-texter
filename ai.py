@@ -4,10 +4,25 @@ Generates personalized, conversational SMS replies based on lead context.
 """
 
 import os
-from openai import OpenAI
+import requests as http_requests
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 MODEL = "gpt-4o-mini"
+OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+
+def call_openai(messages: list, max_tokens: int = 150, temperature: float = 0.75) -> str:
+    """Direct HTTP call to OpenAI — avoids SDK connection issues."""
+    resp = http_requests.post(
+        OPENAI_URL,
+        headers={
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json={"model": MODEL, "messages": messages, "max_tokens": max_tokens, "temperature": temperature},
+        timeout=20
+    )
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"].strip().strip('"').strip("'")
 
 AGENT_NAME = os.getenv("AGENT_NAME", "Mitchell")
 BROKERAGE = os.getenv("BROKERAGE", "@properties IND")
@@ -81,14 +96,8 @@ def generate_reply(lead_context: dict, conversation_history: list, incoming_mess
     messages.append({"role": "user", "content": incoming_message})
 
     try:
-        print(f"[AI] Calling OpenAI with {len(messages)} messages, key ends in ...{os.getenv('OPENAI_API_KEY', '')[-6:]}")
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            max_tokens=150,
-            temperature=0.75,
-        )
-        reply_text = response.choices[0].message.content.strip().strip('"').strip("'")
+        print(f"[AI] Calling OpenAI with {len(messages)} messages, key ends in ...{OPENAI_API_KEY[-6:]}")
+        reply_text = call_openai(messages, max_tokens=150, temperature=0.75)
         print(f"[AI] Success: {reply_text[:60]}")
         return {"reply": reply_text, "handoff": False, "handoff_reason": None}
 
@@ -118,17 +127,11 @@ def generate_opening_message(lead_context: dict) -> str:
     context_str = ", ".join(context_hints) if context_hints else "in our database"
 
     try:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=[
+        return call_openai([
                 {"role": "system", "content": f"""You write short, personalized opening text messages for a real estate agent named {AGENT_NAME} at {BROKERAGE} in Evansville, Indiana.
 Rules: 1-2 sentences only. Say you are texting on behalf of {AGENT_NAME} — use that exact name, never a placeholder. Ask one simple low-pressure question about their real estate needs or timeline. Sound like a real person. No more than one exclamation mark. Not pushy. Return the text message only, no quotes or labels."""},
                 {"role": "user", "content": f"Write an opening text to {first_name}, a lead who is {context_str}."}
-            ],
-            max_tokens=100,
-            temperature=0.85,
-        )
-        return response.choices[0].message.content.strip().strip('"').strip("'")
+            ], max_tokens=100, temperature=0.85)
     except Exception as e:
         print(f"[AI] Error generating opening: {e}")
         return f"Hey {first_name}, this is {AGENT_NAME} with {BROKERAGE} — just wanted to check in and see if you have any real estate questions I can help with?"
